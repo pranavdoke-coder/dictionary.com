@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dictionary</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      background: linear-gradient(135deg, #74ebd5 0%, #ACB6E5 100%);
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: #1976d2;
+      color: white;
+      padding: 2rem 0 1rem 0;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .container {
+      max-width: 500px;
+      margin: 2rem auto;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+      padding: 2rem;
+    }
+    .search-box {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .search-box input {
+      flex: 1;
+      padding: 0.75rem;
+      border: 1px solid #bdbdbd;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      outline: none;
+      transition: border 0.2s;
+    }
+    .search-box input:focus {
+      border: 1.5px solid #1976d2;
+    }
+    .search-box button {
+      background: #1976d2;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 0 1.5rem;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .search-box button:hover {
+      background: #125ea7;
+    }
+    .result {
+      margin-top: 1rem;
+    }
+    .word {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #1976d2;
+      margin-bottom: 0.5rem;
+    }
+    .phonetic {
+      color: #757575;
+      margin-bottom: 1rem;
+    }
+    .meaning {
+      margin-bottom: 1.5rem;
+    }
+    .part-of-speech {
+      font-weight: bold;
+      color: #333;
+      margin-top: 1rem;
+    }
+    .definition {
+      margin-left: 1rem;
+      margin-bottom: 0.5rem;
+    }
+    .error {
+      color: #d32f2f;
+      font-weight: bold;
+      margin-top: 1rem;
+    }
+    @media (max-width: 600px) {
+      .container {
+        padding: 1rem;
+        margin: 1rem;
+      }
+      header {
+        padding: 1rem 0 0.5rem 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Dictionary</h1>
+    <p>Find the meaning of any English word</p>
+  </header>
+  <div class="container">
+    <form class="search-box" id="searchForm">
+      <input type="text" id="wordInput" placeholder="Enter a word..." required>
+      <button type="submit">Search</button>
+    </form>
+    <div class="result" id="result"></div>
+  </div>
+  <script>
+    const form = document.getElementById('searchForm');
+    const input = document.getElementById('wordInput');
+    const resultDiv = document.getElementById('result');
+
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const word = input.value.trim();
+      if (!word) return;
+      resultDiv.innerHTML = '<div style="text-align:center;"><em>Loading...</em></div>';
+      try {
+        const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
+        if (!res.ok) throw new Error('Word not found');
+        const data = await res.json();
+        displayResult(data[0]);
+      } catch (err) {
+        resultDiv.innerHTML = `<div class="error">No definition found for "${word}".</div>`;
+      }
+    });
+
+    function displayResult(entry) {
+      let html = `<div class="word">${entry.word}</div>`;
+      if (entry.phonetic) {
+        html += `<div class="phonetic">/${entry.phonetic}/</div>`;
+      }
+      if (entry.meanings && entry.meanings.length) {
+        entry.meanings.forEach(meaning => {
+          html += `<div class="part-of-speech">${meaning.partOfSpeech}</div>`;
+          meaning.definitions.forEach((def, i) => {
+            html += `<div class="definition">${i+1}. ${def.definition}</div>`;
+            if (def.example) {
+              html += `<div style="margin-left:2rem;color:#555;"><em>Example: ${def.example}</em></div>`;
+            }
+          });
+        });
+      }
+      resultDiv.innerHTML = html;
+    }
+  </script>
+</body>
+</html>
